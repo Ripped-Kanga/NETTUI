@@ -1,0 +1,21 @@
+ConnectionEditorScreen {
+    layout: vertical;
+}
+
+NetworkForm {
+    height: 1fr;
+    border: solid $primary;
+    margin: 0 1;
+}
+
+#editor-buttons {
+    dock: bottom;
+    height: 3;
+    align: right middle;
+    padding-right: 2;
+    margin-bottom: 1;
+}
+
+#editor-buttons Button {
+    margin-left: 2;
+}

@@ -1,0 +1,21 @@
+Screen {
+    background: $surface;
+}
+
+Header {
+    background: $primary;
+    color: white;
+}
+
+Footer {
+    background: $primary;
+    color: white;
+}
+
+.error-text {
+    color: $error;
+}
+
+.muted {
+    color: $text-muted;
+}

@@ -1,0 +1,27 @@
+InterfaceListScreen {
+    layout: vertical;
+}
+
+/* ── Top: interface list spanning full width ─────────────── */
+InterfaceTable {
+    height: 2fr;
+    border: solid $primary;
+    margin: 1 1 0 1;
+}
+
+/* ── Bottom: detail + profiles side by side ──────────────── */
+#bottom-split {
+    height: 3fr;
+    layout: horizontal;
+    margin: 1;
+}
+
+InterfaceDetailPanel {
+    width: 2fr;
+    margin-right: 1;
+}
+
+ProfileTable {
+    width: 3fr;
+    border: solid $primary;
+}

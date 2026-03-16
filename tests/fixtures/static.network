@@ -1,0 +1,15 @@
+[Match]
+Name=eth0
+
+[Network]
+DHCP=no
+IPv6AcceptRA=no
+Address=192.168.1.10/24
+Address=10.0.0.5/8
+Gateway=192.168.1.1
+DNS=1.1.1.1
+DNS=8.8.8.8
+Domains=example.com local
+
+[X-Nettui]
+Description=Home static config
