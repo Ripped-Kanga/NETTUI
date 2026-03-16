@@ -9,6 +9,8 @@ from nettui.models import NetworkProfile
 
 
 class ProfileTable(Widget):
+    BORDER_TITLE = "Profiles"
+
     class Selected(Message):
         def __init__(self, profile: NetworkProfile) -> None:
             self.profile = profile

@@ -79,8 +79,8 @@ def _parse_networkctl_text(output: str) -> dict[str, dict]:
             name = parts[1]
             result[name] = {
                 "Name": name,
-                "Type": parts[2] if len(parts) > 2 else "other",
-                "OperationalState": parts[3] if len(parts) > 3 else "unknown",
+                "Type": parts[2],
+                "OperationalState": parts[3],
             }
     return result
 
@@ -125,8 +125,9 @@ def link_profiles(
     interfaces: list[InterfaceInfo], profiles: list[NetworkProfile]
 ) -> list[InterfaceInfo]:
     """Populate linked_profiles on each InterfaceInfo."""
+    by_iface: dict[str, list[str]] = {}
+    for p in profiles:
+        by_iface.setdefault(p.interface_name, []).append(p.filename)
     for iface in interfaces:
-        iface.linked_profiles = [
-            p.filename for p in profiles if p.interface_name == iface.name
-        ]
+        iface.linked_profiles = by_iface.get(iface.name, [])
     return interfaces

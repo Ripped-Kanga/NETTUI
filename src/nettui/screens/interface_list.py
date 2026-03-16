@@ -21,6 +21,7 @@ from nettui.networkd import (
 from nettui.networkd.parser import NETWORKD_DIR
 from nettui.screens.confirm_dialog import ConfirmDialog
 from nettui.screens.connection_editor import ConnectionEditorScreen
+from nettui.screens.settings_screen import SettingsScreen
 from nettui.widgets.interface_detail import InterfaceDetailPanel
 from nettui.widgets.interface_table import InterfaceTable
 from nettui.widgets.profile_table import ProfileTable
@@ -35,6 +36,7 @@ class InterfaceListScreen(Screen):
         Binding("n", "new_profile", "New Profile"),
         Binding("e", "edit_profile", "Edit Profile"),
         Binding("d", "delete_profile", "Delete Profile"),
+        Binding("s", "settings", "Settings"),
     ]
 
     def __init__(self) -> None:
@@ -68,7 +70,7 @@ class InterfaceListScreen(Screen):
             interfaces = InterfaceScanner().list_interfaces()
             profiles = load_all()
             link_profiles(interfaces, profiles)
-            self.app.call_from_thread(self._update_interface_table, interfaces)
+            self.app.call_from_thread(self._update_interface_table, interfaces, profiles)
         except Exception as exc:
             self.app.call_from_thread(
                 self.query_one(StatusBar).set_status,
@@ -76,7 +78,9 @@ class InterfaceListScreen(Screen):
                 True,
             )
 
-    def _update_interface_table(self, interfaces: list[InterfaceInfo]) -> None:
+    def _update_interface_table(
+        self, interfaces: list[InterfaceInfo], profiles: list[NetworkProfile]
+    ) -> None:
         iface_table = self.query_one(InterfaceTable)
         prev_name = self._selected_interface.name if self._selected_interface else None
 
@@ -93,10 +97,13 @@ class InterfaceListScreen(Screen):
             )
         self._suppress_highlight = False
 
-        # Refresh the detail and profile panels for the restored selection
+        # Refresh the detail and profile panels using already-loaded profiles
         if self._selected_interface is not None:
             self.query_one(InterfaceDetailPanel).load_interface(self._selected_interface)
-            self._load_profiles_for(self._selected_interface)
+            iface_profiles = [
+                p for p in profiles if p.interface_name == self._selected_interface.name
+            ]
+            self.query_one(ProfileTable).load(iface_profiles)
 
     def _load_profiles_for(self, interface: InterfaceInfo) -> None:
         self.run_worker(
@@ -154,6 +161,12 @@ class InterfaceListScreen(Screen):
         self.app.push_screen(
             ConfirmDialog(f"Delete '{profile.filename}'?"), self._on_confirm_delete
         )
+
+    def action_settings(self) -> None:
+        def _after(_: None) -> None:
+            self.query_one(InterfaceDetailPanel)._rebuild_display()
+
+        self.app.push_screen(SettingsScreen(), _after)
 
     def _on_confirm_delete(self, confirmed: bool) -> None:
         if not confirmed:

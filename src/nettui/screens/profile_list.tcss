@@ -38,4 +38,5 @@ InterfaceDetailPanel {
 
 ProfileTable {
     width: 3fr;
+    border: solid $primary;
 }

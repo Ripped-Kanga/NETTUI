@@ -28,6 +28,8 @@ def _carrier_text(carrier: bool) -> Text:
 
 
 class InterfaceTable(Widget):
+    BORDER_TITLE = "Interfaces"
+
     class Selected(Message):
         def __init__(self, interface: InterfaceInfo) -> None:
             self.interface = interface
