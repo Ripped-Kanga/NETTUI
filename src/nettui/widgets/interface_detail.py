@@ -308,7 +308,6 @@ class InterfaceDetailPanel(Widget):
             lines.append(_row("Addresses", "none", "dim"))
 
         lines.append(_row("Gateway", live["gateway"] or "—"))
-        lines.append(_row("Metric", live["metric"] or "—"))
 
         if live["dns"]:
             lines.append(_row("DNS", live["dns"][0]))
@@ -316,6 +315,8 @@ class InterfaceDetailPanel(Widget):
                 lines.append(_row("", srv))
         else:
             lines.append(_row("DNS", "—", "dim"))
+
+        lines.append(_row("Metric", live["metric"] or "—"))
 
         self.query_one("#detail-content", Static).update(Text("\n").join(lines))
 

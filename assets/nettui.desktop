@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=NETTUI
+Comment=TUI manager for systemd-networkd connections
+Exec=nettui
+Icon=nettui
+Terminal=true
+Type=Application
+Categories=Network;System;Settings;
+Keywords=network;networkd;systemd;ethernet;wifi;

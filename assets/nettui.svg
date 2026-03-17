@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="120" fill="#1a1b26"/>
+  <circle cx="128" cy="128" r="116" fill="none" stroke="#7aa2f7" stroke-width="3"/>
+
+  <!-- Terminal window -->
+  <rect x="48" y="56" width="160" height="110" rx="8" fill="#24283b" stroke="#7aa2f7" stroke-width="2.5"/>
+  <!-- Title bar -->
+  <rect x="48" y="56" width="160" height="20" rx="8" fill="#414868"/>
+  <rect x="48" y="68" width="160" height="8" fill="#414868"/>
+  <!-- Title bar dots -->
+  <circle cx="64" cy="66" r="4" fill="#f7768e"/>
+  <circle cx="78" cy="66" r="4" fill="#e0af68"/>
+  <circle cx="92" cy="66" r="4" fill="#9ece6a"/>
+
+  <!-- Terminal prompt lines -->
+  <text x="60" y="98" font-family="monospace" font-size="13" fill="#9ece6a">$</text>
+  <text x="74" y="98" font-family="monospace" font-size="13" fill="#c0caf5">nettui</text>
+
+  <!-- Network sparkline graph in terminal -->
+  <polyline points="60,130 75,125 90,128 105,115 120,118 135,108 150,112 165,105 180,110 195,102"
+            stroke="#7aa2f7" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="60,145 75,142 90,140 105,143 120,138 135,141 150,135 165,139 180,132 195,136"
+            stroke="#9ece6a" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+
+  <!-- Network nodes below terminal -->
+  <circle cx="88" cy="200" r="10" fill="#414868" stroke="#7aa2f7" stroke-width="2"/>
+  <circle cx="128" cy="190" r="12" fill="#414868" stroke="#7aa2f7" stroke-width="2.5"/>
+  <circle cx="168" cy="200" r="10" fill="#414868" stroke="#7aa2f7" stroke-width="2"/>
+
+  <!-- Connection lines from terminal to nodes -->
+  <line x1="108" y1="166" x2="88" y2="190" stroke="#7aa2f7" stroke-width="1.5" opacity="0.6"/>
+  <line x1="128" y1="166" x2="128" y2="178" stroke="#7aa2f7" stroke-width="2" opacity="0.8"/>
+  <line x1="148" y1="166" x2="168" y2="190" stroke="#7aa2f7" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Node-to-node lines -->
+  <line x1="98" y1="200" x2="116" y2="192" stroke="#7aa2f7" stroke-width="1.5" opacity="0.4"/>
+  <line x1="140" y1="192" x2="158" y2="200" stroke="#7aa2f7" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Small signal dots on nodes -->
+  <circle cx="88" cy="200" r="3" fill="#7aa2f7"/>
+  <circle cx="128" cy="190" r="4" fill="#7aa2f7"/>
+  <circle cx="168" cy="200" r="3" fill="#7aa2f7"/>
+</svg>
