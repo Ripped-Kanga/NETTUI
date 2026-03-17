@@ -3,7 +3,7 @@ from __future__ import annotations
 from textual.app import ComposeResult
 from textual.message import Message
 from textual.widget import Widget
-from textual.widgets import DataTable
+from textual.widgets import DataTable, Static
 
 from nettui.models import NetworkProfile
 
@@ -20,6 +20,14 @@ class ProfileTable(Widget):
     ProfileTable {
         height: 1fr;
     }
+
+    #active-profile-label {
+        height: 1;
+        padding: 0 1;
+        color: $text;
+        text-style: bold;
+        background: $primary 15%;
+    }
     """
 
     def __init__(self, **kwargs) -> None:
@@ -27,11 +35,22 @@ class ProfileTable(Widget):
         self._profiles: dict[str, NetworkProfile] = {}
 
     def compose(self) -> ComposeResult:
+        yield Static("Active Profile: —", id="active-profile-label")
         yield DataTable(cursor_type="row", zebra_stripes=True)
+
+    def update_active_label(self, applied_from: str) -> None:
+        label = self.query_one("#active-profile-label", Static)
+        if applied_from:
+            display = applied_from
+            if display.endswith(".network"):
+                display = display[: -len(".network")]
+            label.update(f"● Active Profile: {display}")
+        else:
+            label.update("Active Profile: —")
 
     def on_mount(self) -> None:
         table = self.query_one(DataTable)
-        table.add_columns("File", "Mode", "Address", "DNS", "Gateway")
+        table.add_columns("File", "Mode", "Address", "DNS", "Gateway", "Metric")
 
     def load(self, profiles: list[NetworkProfile]) -> None:
         table = self.query_one(DataTable)
@@ -46,6 +65,7 @@ class ProfileTable(Widget):
                 p.display_address(),
                 dns_display,
                 p.gateway or "—",
+                str(p.route_metric) if p.route_metric else "—",
                 key=p.filename,
             )
 

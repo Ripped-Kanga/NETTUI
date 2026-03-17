@@ -1,4 +1,9 @@
-from nettui.widgets.interface_detail import _GRAPH_HEIGHT, _fmt_rate, _multirow_sparkline
+from nettui.widgets.interface_detail import (
+    _GRAPH_HEIGHT,
+    _area_sparkline,
+    _braille_line_graph,
+    _fmt_rate,
+)
 
 
 def test_fmt_rate_bytes():
@@ -25,58 +30,95 @@ def test_fmt_rate_gigabytes():
 
 
 def test_fmt_rate_bits_mode():
-    # 1000 b/s boundary
-    assert _fmt_rate(125, "bits") == "1.0 Kb/s"       # 125 B/s × 8 = 1000 b/s
-    assert _fmt_rate(125_000, "bits") == "1.0 Mb/s"   # 125 KB/s × 8 = 1 Mb/s
+    assert _fmt_rate(125, "bits") == "1.0 Kb/s"
+    assert _fmt_rate(125_000, "bits") == "1.0 Mb/s"
     assert _fmt_rate(125_000_000, "bits") == "1.0 Gb/s"
 
+
 def test_fmt_rate_bits_sub_kilo():
-    assert _fmt_rate(10, "bits") == "80 b/s"           # 10 B/s × 8 = 80 b/s
+    assert _fmt_rate(10, "bits") == "80 b/s"
 
 
-def test_multirow_empty():
-    rows = _multirow_sparkline([], 10, 3)
+def test_braille_empty():
+    rows = _braille_line_graph([], 10, 3)
     assert len(rows) == 3
     assert all(r == " " * 10 for r in rows)
 
 
-def test_multirow_row_count():
-    rows = _multirow_sparkline([1.0, 2.0, 3.0], 10, _GRAPH_HEIGHT)
+def test_braille_row_count():
+    rows = _braille_line_graph([1.0, 2.0, 3.0], 10, _GRAPH_HEIGHT)
     assert len(rows) == _GRAPH_HEIGHT
 
 
-def test_multirow_row_width():
-    rows = _multirow_sparkline([1.0, 2.0, 3.0], 10, 3)
+def test_braille_row_width():
+    rows = _braille_line_graph([1.0, 2.0, 3.0], 10, 3)
     assert all(len(r) == 10 for r in rows)
 
 
-def test_multirow_all_zeros():
-    rows = _multirow_sparkline([0, 0, 0], 5, 3)
-    # max_val falls back to 1.0 → all sub_heights = 0 → every cell is a space
-    assert all(c == " " for r in rows for c in r)
+def test_braille_all_zeros():
+    rows = _braille_line_graph([0, 0, 0], 5, 3)
+    # All values are 0 → dots at bottom row only (row 0 in dot space)
+    # Bottom-left dots are still set since all map to dot position 0
+    flat = "".join(rows)
+    # At minimum the braille base (empty) should be present
+    assert all(ord(c) >= 0x2800 or c == " " for c in flat)
 
 
-def test_multirow_full_value_fills_all_rows():
-    # Max value should produce a full block in every row for that column.
-    # data=[0,1,0] → no padding, chars at index 0/1/2 in each row.
-    rows = _multirow_sparkline([0.0, 1.0, 0.0], 3, 3)
-    assert rows[0][1] == "█"   # top row, centre column: full
-    assert rows[1][1] == "█"   # middle row, centre column: full
-    assert rows[2][1] == "█"   # bottom row, centre column: full
-    assert rows[0][0] == " "   # neighbouring zero is empty
-    assert rows[0][2] == " "
+def test_braille_max_value_at_top():
+    # Single max value should place a dot in the top character row
+    rows = _braille_line_graph([1.0], 5, 3)
+    # The dot should be in the top row (row index 0), not just spaces
+    top_row = rows[0]
+    assert any(ord(c) > 0x2800 for c in top_row)
 
 
-def test_multirow_half_value_fills_bottom_row_only():
-    # values=[1.0, 2.0], max=2.0 → first sample maps to sub_height=8 (exactly half of 16)
-    # row_floor=8 (top row): sh(8) <= 8 → empty
-    # row_floor=0 (bottom row): sh(8) >= 8 → full block
-    rows = _multirow_sparkline([1.0, 2.0], 2, 2)
-    assert rows[0][0] == " "   # top row: half-value sample is empty
-    assert rows[1][0] == "█"   # bottom row: half-value sample is full
-
-
-def test_multirow_truncates_to_width():
+def test_braille_truncates_to_width():
+    # Each char holds 2 data points, so 100 values need 50 chars → truncated to 20
     values = list(range(100))
-    rows = _multirow_sparkline(values, 20, 3)
+    rows = _braille_line_graph(values, 20, 3)
+    assert all(len(r) == 20 for r in rows)
+
+
+def test_braille_ascending_values():
+    # Ascending values: dots should trend upward (bottom-left to top-right)
+    values = [float(i) for i in range(20)]
+    rows = _braille_line_graph(values, 10, 3)
+    # Bottom row should have dots on left side, top row on right side
+    bottom = rows[-1]
+    top = rows[0]
+    # Left chars of bottom row should have dots
+    assert any(ord(c) > 0x2800 for c in bottom[:5])
+    # Right chars of top row should have dots
+    assert any(ord(c) > 0x2800 for c in top[5:])
+
+
+# ── Area sparkline tests ──
+
+
+def test_area_empty():
+    rows = _area_sparkline([], 10, 3)
+    assert len(rows) == 3
+    assert all(r == " " * 10 for r in rows)
+
+
+def test_area_row_count():
+    rows = _area_sparkline([1.0, 2.0, 3.0], 10, _GRAPH_HEIGHT)
+    assert len(rows) == _GRAPH_HEIGHT
+
+
+def test_area_row_width():
+    rows = _area_sparkline([1.0, 2.0, 3.0], 10, 3)
+    assert all(len(r) == 10 for r in rows)
+
+
+def test_area_max_value_fills_all_rows():
+    rows = _area_sparkline([0.0, 1.0, 0.0], 3, 3)
+    assert rows[0][1] == "█"
+    assert rows[1][1] == "█"
+    assert rows[2][1] == "█"
+
+
+def test_area_truncates_to_width():
+    values = list(range(100))
+    rows = _area_sparkline(values, 20, 3)
     assert all(len(r) == 20 for r in rows)

@@ -22,6 +22,7 @@ def test_parse_static():
     assert "local" in profile.domains
     assert profile.ipv6_accept_ra is False
     assert profile.description == "Home static config"
+    assert profile.route_metric == 100
 
 
 def test_parse_dhcp():
@@ -32,6 +33,7 @@ def test_parse_dhcp():
     assert profile.description == "WiFi DHCP"
     assert profile.addresses == []
     assert profile.gateway == ""
+    assert profile.route_metric == 0
 
 
 def test_parse_missing_file():
@@ -51,6 +53,13 @@ def test_parse_missing_name(tmp_path):
     bad.write_text("[Match]\n\n[Network]\nDHCP=yes\n")
     with pytest.raises(NetworkdParseError, match="Name"):
         parse_file(bad)
+
+
+def test_parse_dhcp_route_metric(tmp_path):
+    f = tmp_path / "dhcp-metric.network"
+    f.write_text("[Match]\nName=eth0\n\n[Network]\nDHCP=yes\n\n[DHCPv4]\nRouteMetric=600\n")
+    profile = parse_file(f)
+    assert profile.route_metric == 600
 
 
 def test_load_all_skips_unparseable(tmp_path):

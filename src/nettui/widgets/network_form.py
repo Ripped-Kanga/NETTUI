@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import contextlib
 import ipaddress
+from pathlib import Path
 
 from textual.app import ComposeResult
 from textual.containers import ScrollableContainer, Vertical
@@ -8,6 +10,7 @@ from textual.widget import Widget
 from textual.widgets import Input, Label, Select, Switch
 
 from nettui.models import NetworkProfile, ProfileValidationError
+from nettui.networkd.parser import NETWORKD_DIR
 
 
 class NetworkForm(Widget):
@@ -151,6 +154,15 @@ class NetworkForm(Widget):
                     classes="form-field",
                 )
 
+            with Vertical(classes="form-row"):
+                yield Label("Route metric", classes="form-label")
+                yield Input(
+                    value=str(p.route_metric) if p.route_metric else "",
+                    placeholder="0 = default (lower = higher priority)",
+                    id="f-metric",
+                    classes="form-field",
+                )
+
             with Vertical(classes="switch-row"):
                 yield Label("IPv6 Accept RA", classes="switch-label")
                 yield Switch(value=p.ipv6_accept_ra, id="f-ipv6ra")
@@ -160,10 +172,8 @@ class NetworkForm(Widget):
             return
         is_static = event.value == "no"
         for fid in ("f-addr", "f-gw", "f-dns"):
-            try:
+            with contextlib.suppress(Exception):
                 self.query_one(f"#{fid}", Input).disabled = not is_static
-            except Exception:
-                pass
 
     def show_error(self, field_id: str, message: str) -> None:
         self.query_one("#form-error", Label).update(f"Error: {message}")
@@ -179,7 +189,7 @@ class NetworkForm(Widget):
             w.remove_class("-invalid")
 
     def collect(self) -> NetworkProfile:
-        """Read all fields and return a NetworkProfile, raising ProfileValidationError on bad input."""
+        """Validate form fields and return a NetworkProfile."""
         self.clear_errors()
 
         iface = self.query_one("#f-iface", Input).value.strip()
@@ -198,6 +208,11 @@ class NetworkForm(Widget):
         if "/" in filename_input or "\\" in filename_input:
             raise ProfileValidationError(
                 field="f-filename", message="Filename must not contain path separators"
+            )
+        if self._profile.is_new() and (Path(NETWORKD_DIR) / filename_input).exists():
+            raise ProfileValidationError(
+                field="f-filename",
+                message=f"'{filename_input}' already exists",
             )
 
         dhcp_select = self.query_one("#f-dhcp", Select)
@@ -219,7 +234,7 @@ class NetworkForm(Widget):
                     except ValueError:
                         raise ProfileValidationError(
                             field="f-addr", message=f"'{cidr}' is not a valid CIDR address"
-                        )
+                        ) from None
                     addresses.append(cidr)
 
             raw_gw = self.query_one("#f-gw", Input).value.strip()
@@ -230,7 +245,7 @@ class NetworkForm(Widget):
                 except ValueError:
                     raise ProfileValidationError(
                         field="f-gw", message=f"'{raw_gw}' is not a valid IP address"
-                    )
+                    ) from None
 
             raw_dns = self.query_one("#f-dns", Input).value.strip()
             if raw_dns:
@@ -241,10 +256,19 @@ class NetworkForm(Widget):
                     except ValueError:
                         raise ProfileValidationError(
                             field="f-dns", message=f"'{token}' is not a valid DNS server IP"
-                        )
+                        ) from None
 
         raw_domains = self.query_one("#f-domains", Input).value.strip()
         domains = raw_domains.split() if raw_domains else []
+
+        raw_metric = self.query_one("#f-metric", Input).value.strip()
+        route_metric = 0
+        if raw_metric:
+            if not raw_metric.isdigit():
+                raise ProfileValidationError(
+                    field="f-metric", message="Route metric must be a positive integer"
+                )
+            route_metric = int(raw_metric)
 
         ipv6_accept_ra = self.query_one("#f-ipv6ra", Switch).value
         description = self.query_one("#f-desc", Input).value.strip()
@@ -262,5 +286,6 @@ class NetworkForm(Widget):
             dns=dns,
             domains=domains,
             ipv6_accept_ra=ipv6_accept_ra,
+            route_metric=route_metric,
             description=description,
         )

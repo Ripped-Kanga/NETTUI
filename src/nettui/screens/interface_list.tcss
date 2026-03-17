@@ -21,7 +21,16 @@ InterfaceDetailPanel {
     margin-right: 1;
 }
 
-ProfileTable {
+#profile-panel {
     width: 3fr;
+    layout: vertical;
+}
+
+ProfileTable {
+    height: 1fr;
     border: solid $primary;
+}
+
+BandwidthGraphPanel {
+    margin-top: 1;
 }

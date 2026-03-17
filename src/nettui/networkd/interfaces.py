@@ -127,7 +127,43 @@ def link_profiles(
     """Populate linked_profiles on each InterfaceInfo."""
     by_iface: dict[str, list[str]] = {}
     for p in profiles:
-        by_iface.setdefault(p.interface_name, []).append(p.filename)
+        if not p.applied_from:
+            by_iface.setdefault(p.interface_name, []).append(p.filename)
     for iface in interfaces:
         iface.linked_profiles = by_iface.get(iface.name, [])
     return interfaces
+
+
+def active_network_file(iface_name: str) -> str:
+    """Return the basename of the active .network file for an interface, or ""."""
+    try:
+        result = subprocess.run(
+            ["networkctl", "--no-pager", "--json=short", "status", iface_name],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0:
+            data = json.loads(result.stdout)
+            nf = data.get("NetworkFile", "")
+            if nf:
+                return Path(nf).name
+    except (FileNotFoundError, subprocess.TimeoutExpired, json.JSONDecodeError):
+        pass
+
+    # Fallback: parse plain-text output
+    try:
+        result = subprocess.run(
+            ["networkctl", "--no-pager", "status", iface_name],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0:
+            for line in result.stdout.splitlines():
+                if "Network File:" in line:
+                    return Path(line.split(":", 1)[1].strip()).name
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    return ""

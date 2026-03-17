@@ -20,8 +20,6 @@ def reload_networkd() -> None:
                 stderr=result.stderr,
             )
     except FileNotFoundError as exc:
-        raise NetworkdReloadError(
-            "networkctl not found — is systemd-networkd installed?"
-        ) from exc
+        raise NetworkdReloadError("networkctl not found — is systemd-networkd installed?") from exc
     except subprocess.TimeoutExpired as exc:
         raise NetworkdReloadError("networkctl reload timed out") from exc

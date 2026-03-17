@@ -1,5 +1,3 @@
-import os
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -7,7 +5,7 @@ import pytest
 from nettui.models import NetworkProfile
 from nettui.networkd.exceptions import NetworkdPermissionError
 from nettui.networkd.parser import parse_file
-from nettui.networkd.writer import NetworkFileWriter, delete_profile, _render_network_file
+from nettui.networkd.writer import NetworkFileWriter, _render_network_file, delete_profile
 
 
 def _static_profile() -> NetworkProfile:
@@ -75,6 +73,56 @@ def test_write_permission_denied(tmp_path):
             writer.write(profile)
 
 
+def test_render_static_with_metric():
+    p = _static_profile()
+    p.route_metric = 100
+    rendered = _render_network_file(p)
+    assert "[Route]" in rendered
+    assert "Metric=100" in rendered
+    # Gateway should be in [Route], not [Network]
+    lines = rendered.splitlines()
+    net_idx = lines.index("[Network]")
+    route_idx = lines.index("[Route]")
+    for i in range(net_idx, route_idx):
+        assert not lines[i].startswith("Gateway=")
+
+
+def test_render_dhcp_with_metric():
+    p = NetworkProfile(
+        filename="10-wlan0.network",
+        interface_name="wlan0",
+        dhcp="yes",
+        route_metric=600,
+    )
+    rendered = _render_network_file(p)
+    assert "[DHCPv4]" in rendered
+    assert "[DHCPv6]" in rendered
+    assert "RouteMetric=600" in rendered
+    assert "[Route]" not in rendered
+
+
+def test_render_dhcpv4_only_metric():
+    p = NetworkProfile(
+        filename="10-eth0.network",
+        interface_name="eth0",
+        dhcp="ipv4",
+        route_metric=300,
+    )
+    rendered = _render_network_file(p)
+    assert "[DHCPv4]" in rendered
+    assert "[DHCPv6]" not in rendered
+    assert "RouteMetric=300" in rendered
+
+
+def test_round_trip_with_metric(tmp_path):
+    p = _static_profile()
+    p.route_metric = 200
+    writer = NetworkFileWriter(directory=tmp_path)
+    written = writer.write(p)
+    reparsed = parse_file(written)
+    assert reparsed.route_metric == 200
+
+
 def test_delete_profile(tmp_path):
     target = tmp_path / "10-eth0.network"
     target.write_text("[Match]\nName=eth0\n")
@@ -83,6 +131,8 @@ def test_delete_profile(tmp_path):
 
 
 def test_delete_profile_permission_denied(tmp_path):
-    with patch("nettui.networkd.writer.os.access", return_value=False):
-        with pytest.raises(NetworkdPermissionError):
-            delete_profile("10-eth0.network", directory=tmp_path)
+    with (
+        patch("nettui.networkd.writer.os.access", return_value=False),
+        pytest.raises(NetworkdPermissionError),
+    ):
+        delete_profile("10-eth0.network", directory=tmp_path)

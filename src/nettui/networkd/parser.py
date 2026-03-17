@@ -72,9 +72,7 @@ def parse_file(path: Path) -> NetworkProfile:
     except NetworkdParseError:
         raise
     except Exception as exc:
-        raise NetworkdParseError(
-            f"Failed to parse {path.name}: {exc}", filename=path.name
-        ) from exc
+        raise NetworkdParseError(f"Failed to parse {path.name}: {exc}", filename=path.name) from exc
 
     if "Match" not in sections:
         raise NetworkdParseError(
@@ -99,8 +97,20 @@ def parse_file(path: Path) -> NetworkProfile:
     ra_raw = _get_scalar(net, "IPv6AcceptRA", default="yes")
     ipv6_accept_ra = ra_raw.lower() not in ("no", "false", "0")
 
+    # Route metric: check [Route] Metric=, [DHCPv4] RouteMetric=, [DHCPv6] RouteMetric=
+    route_section = sections.get("Route", {})
+    dhcpv4_section = sections.get("DHCPv4", {})
+    dhcpv6_section = sections.get("DHCPv6", {})
+    metric_raw = (
+        _get_scalar(route_section, "Metric")
+        or _get_scalar(dhcpv4_section, "RouteMetric")
+        or _get_scalar(dhcpv6_section, "RouteMetric")
+    )
+    route_metric = int(metric_raw) if metric_raw.isdigit() else 0
+
     nettui = sections.get("X-Nettui", {})
     description = _get_scalar(nettui, "Description")
+    applied_from = _get_scalar(nettui, "AppliedFrom")
 
     return NetworkProfile(
         filename=path.name,
@@ -111,7 +121,9 @@ def parse_file(path: Path) -> NetworkProfile:
         dns=dns,
         domains=domains,
         ipv6_accept_ra=ipv6_accept_ra,
+        route_metric=route_metric,
         description=description,
+        applied_from=applied_from,
     )
 
 

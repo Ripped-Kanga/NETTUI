@@ -23,7 +23,9 @@ class NetworkProfile:
     dns: list[str] = field(default_factory=list)
     domains: list[str] = field(default_factory=list)
     ipv6_accept_ra: bool = True
+    route_metric: int = 0  # 0 means unset (use networkd default)
     description: str = ""
+    applied_from: str = ""  # source profile filename, set when activated via nettui
 
     def is_new(self) -> bool:
         return self.filename == ""

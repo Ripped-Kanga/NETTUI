@@ -49,8 +49,6 @@ def test_list_interfaces_sorts_loopback_last():
         InterfaceInfo("lo", "loopback", True, "carrier", "00:00:00:00:00:00"),
         InterfaceInfo("eth0", "ether", True, "routable", "aa:bb:cc:dd:ee:ff"),
     ]
-    # Simulate sorting
-    from nettui.networkd.interfaces import _iface_type
 
     def sort_key(i: InterfaceInfo):
         order = {"loopback": 2, "ether": 0, "wlan": 0}

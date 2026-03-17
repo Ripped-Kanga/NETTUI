@@ -14,7 +14,7 @@ class ConfirmDialog(ModalScreen[bool]):
 
     #dialog-container {
         width: 60;
-        height: 10;
+        height: auto;
         border: solid $warning;
         background: $surface;
         padding: 2 4;
@@ -22,15 +22,16 @@ class ConfirmDialog(ModalScreen[bool]):
     }
 
     #dialog-question {
-        height: 3;
+        height: auto;
         content-align: center middle;
         text-align: center;
+        margin-bottom: 1;
     }
 
     #dialog-buttons {
         layout: horizontal;
         align: center middle;
-        height: 3;
+        height: auto;
     }
 
     #dialog-buttons Button {
