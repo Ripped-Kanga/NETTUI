@@ -102,12 +102,8 @@ class SettingsScreen(ModalScreen[None]):
                 with Vertical(classes="settings-col"):
                     yield Label("Bandwidth Units", classes="section-label-first")
                     yield RadioSet(
-                        RadioButton(
-                            "Bytes  (B, KB, MB, GB/s)", value=SETTINGS.bw_unit == "bytes"
-                        ),
-                        RadioButton(
-                            "Bits   (b, Kb, Mb, Gb/s)", value=SETTINGS.bw_unit == "bits"
-                        ),
+                        RadioButton("Bytes  (B, KB, MB, GB/s)", value=SETTINGS.bw_unit == "bytes"),
+                        RadioButton("Bits   (b, Kb, Mb, Gb/s)", value=SETTINGS.bw_unit == "bits"),
                         id="bw-unit-radio",
                     )
 
@@ -116,9 +112,7 @@ class SettingsScreen(ModalScreen[None]):
                         RadioButton(
                             "Line  (braille dots)", value=SETTINGS.graph_style == GRAPH_LINE
                         ),
-                        RadioButton(
-                            "Area  (block fill)", value=SETTINGS.graph_style == GRAPH_AREA
-                        ),
+                        RadioButton("Area  (block fill)", value=SETTINGS.graph_style == GRAPH_AREA),
                         id="graph-style-radio",
                     )
 
@@ -154,19 +148,13 @@ class SettingsScreen(ModalScreen[None]):
 
                     yield Label("Traceroute Destination", classes="section-label")
                     yield RadioSet(
-                        RadioButton(
-                            "Gateway", value=SETTINGS.traceroute_dest == DEST_GATEWAY
-                        ),
+                        RadioButton("Gateway", value=SETTINGS.traceroute_dest == DEST_GATEWAY),
                         RadioButton(
                             "Cloudflare (1.1.1.1)",
                             value=SETTINGS.traceroute_dest == DEST_CLOUDFLARE,
                         ),
-                        RadioButton(
-                            "Custom 1", value=SETTINGS.traceroute_dest == DEST_CUSTOM1
-                        ),
-                        RadioButton(
-                            "Custom 2", value=SETTINGS.traceroute_dest == DEST_CUSTOM2
-                        ),
+                        RadioButton("Custom 1", value=SETTINGS.traceroute_dest == DEST_CUSTOM1),
+                        RadioButton("Custom 2", value=SETTINGS.traceroute_dest == DEST_CUSTOM2),
                         id="traceroute-dest-radio",
                     )
 

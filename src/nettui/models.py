@@ -11,6 +11,7 @@ class InterfaceInfo:
     operational_state: str  # "routable", "degraded", "off", "unknown", etc.
     mac_address: str
     linked_profiles: list[str] = field(default_factory=list)
+    alias: str = ""
 
 
 @dataclass
@@ -26,6 +27,7 @@ class NetworkProfile:
     route_metric: int = 0  # 0 means unset (use networkd default)
     description: str = ""
     applied_from: str = ""  # source profile filename, set when activated via nettui
+    interface_alias: str = ""  # alias for the interface, stored in [X-Nettui]
 
     def is_new(self) -> bool:
         return self.filename == ""

@@ -56,7 +56,7 @@ class InterfaceTable(Widget):
 
     def on_mount(self) -> None:
         table = self.query_one(DataTable)
-        table.add_columns("Interface", "Type", "State", "Carrier", "Profiles")
+        table.add_columns("Interface", "Alias", "Type", "State", "Carrier", "Profiles")
 
     def load(self, interfaces: list[InterfaceInfo]) -> None:
         table = self.query_one(DataTable)
@@ -66,6 +66,7 @@ class InterfaceTable(Widget):
             self._interfaces[iface.name] = iface
             table.add_row(
                 iface.name,
+                Text(iface.alias, style="italic") if iface.alias else Text("—", style="dim"),
                 iface.type,
                 _state_text(iface.operational_state),
                 _carrier_text(iface.carrier),
