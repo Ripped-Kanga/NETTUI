@@ -290,6 +290,8 @@ class InterfaceDetailPanel(Widget):
         lines.append(Text("  Interface", style="bold"))
         lines.append(Text("  " + "─" * 28, style="dim"))
         lines.append(_row("Name", iface.name))
+        if iface.alias:
+            lines.append(_row("Alias", iface.alias, "italic"))
         lines.append(_row("Type", iface.type))
         lines.append(_row("MAC", iface.mac_address or "—"))
         lines.append(_row("Carrier", carrier_text[0], carrier_text[1]))

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from nettui.models import NetworkProfile
 from nettui.networkd.exceptions import NetworkdPermissionError
-from nettui.networkd.parser import NETWORKD_DIR
+from nettui.networkd.parser import NETWORKD_DIR, load_all
 
 
 def _render_network_file(profile: NetworkProfile) -> str:
@@ -50,13 +50,15 @@ def _render_network_file(profile: NetworkProfile) -> str:
         lines.append(f"Gateway={profile.gateway}")
         lines.append(f"Metric={profile.route_metric}")
 
-    if profile.description or profile.applied_from:
+    if profile.description or profile.applied_from or profile.interface_alias:
         lines.append("")
         lines.append("[X-Nettui]")
         if profile.description:
             lines.append(f"Description={profile.description}")
         if profile.applied_from:
             lines.append(f"AppliedFrom={profile.applied_from}")
+        if profile.interface_alias:
+            lines.append(f"InterfaceAlias={profile.interface_alias}")
 
     lines.append("")
     return "\n".join(lines)
@@ -138,6 +140,7 @@ def apply_profile(source: NetworkProfile, directory: Path | None = None) -> Path
         route_metric=source.route_metric,
         description=source.description,
         applied_from=source.filename,
+        interface_alias=source.interface_alias,
     )
 
     content = _render_network_file(applied)
@@ -150,3 +153,16 @@ def apply_profile(source: NetworkProfile, directory: Path | None = None) -> Path
         raise
 
     return target
+
+
+def update_interface_alias(iface_name: str, alias: str, directory: Path | None = None) -> None:
+    """Update InterfaceAlias in all .network templates for the given interface.
+
+    Re-parses each matching profile, sets interface_alias, and rewrites the file.
+    """
+    d = directory or NETWORKD_DIR
+    writer = NetworkFileWriter(d)
+    for profile in load_all(d):
+        if profile.interface_name == iface_name:
+            profile.interface_alias = alias
+            writer.write(profile)

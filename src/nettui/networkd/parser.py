@@ -111,6 +111,7 @@ def parse_file(path: Path) -> NetworkProfile:
     nettui = sections.get("X-Nettui", {})
     description = _get_scalar(nettui, "Description")
     applied_from = _get_scalar(nettui, "AppliedFrom")
+    interface_alias = _get_scalar(nettui, "InterfaceAlias")
 
     return NetworkProfile(
         filename=path.name,
@@ -124,6 +125,7 @@ def parse_file(path: Path) -> NetworkProfile:
         route_metric=route_metric,
         description=description,
         applied_from=applied_from,
+        interface_alias=interface_alias,
     )
 
 

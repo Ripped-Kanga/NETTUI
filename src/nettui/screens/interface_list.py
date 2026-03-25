@@ -8,6 +8,7 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Footer, Header
 
+from nettui.aliases import load_aliases, save_alias
 from nettui.models import InterfaceInfo, NetworkProfile
 from nettui.networkd import (
     InterfaceScanner,
@@ -18,8 +19,10 @@ from nettui.networkd import (
     link_profiles,
     load_all,
     reload_networkd,
+    update_interface_alias,
 )
 from nettui.networkd.parser import NETWORKD_DIR
+from nettui.screens.alias_editor import AliasEditorDialog
 from nettui.screens.confirm_dialog import ConfirmDialog
 from nettui.screens.connection_editor import ConnectionEditorScreen
 from nettui.screens.diagnostic_screen import DiagnosticScreen
@@ -35,6 +38,7 @@ class InterfaceListScreen(Screen):
 
     BINDINGS = [
         Binding("r", "refresh", "Refresh"),
+        Binding("ctrl+e", "edit_alias", "Edit Alias"),
         Binding("n", "new_profile", "New Profile"),
         Binding("e", "edit_profile", "Edit Profile"),
         Binding("d", "delete_profile", "Delete Profile"),
@@ -77,6 +81,10 @@ class InterfaceListScreen(Screen):
             interfaces = InterfaceScanner().list_interfaces()
             profiles = load_all()
             link_profiles(interfaces, profiles)
+            # Populate interface aliases from config
+            aliases = load_aliases()
+            for iface in interfaces:
+                iface.alias = aliases.get(iface.name, "")
             # Fetch active profile info for the selected (or first) interface
             iface_name = (
                 self._selected_interface.name
@@ -249,6 +257,55 @@ class InterfaceListScreen(Screen):
             self.app.call_from_thread(self.query_one(InterfaceDetailPanel).refresh_live)
 
         return _work
+
+    # ── Alias editing ──────────────────────────────────────────────────────
+
+    def action_edit_alias(self) -> None:
+        if self._selected_interface is None:
+            self.query_one(StatusBar).set_status("Select an interface first.", warning=True)
+            return
+        iface = self._selected_interface
+        self.app.push_screen(
+            AliasEditorDialog(iface.name, iface.alias),
+            self._on_alias_result,
+        )
+
+    def _on_alias_result(self, alias: str | None) -> None:
+        if alias is None:
+            return
+        if self._selected_interface is None:
+            return
+        iface_name = self._selected_interface.name
+        self.run_worker(self._save_alias(iface_name, alias), thread=True)
+
+    def _save_alias(self, iface_name: str, alias: str):
+        def _work() -> None:
+            status = self.query_one(StatusBar)
+            try:
+                save_alias(iface_name, alias)
+                # Update [X-Nettui] InterfaceAlias= in all templates for this interface
+                if self._can_write:
+                    update_interface_alias(iface_name, alias)
+                label = f"'{alias}'" if alias else "removed"
+                self.app.call_from_thread(
+                    status.set_status,
+                    f"Alias {label} for {iface_name}",
+                )
+            except NetworkdPermissionError as exc:
+                # Alias saved locally but templates couldn't be updated
+                self.app.call_from_thread(
+                    status.set_status,
+                    f"Alias saved locally but templates not updated: {exc}",
+                    False,
+                    True,
+                )
+            except Exception as exc:
+                self.app.call_from_thread(status.set_status, f"Error: {exc}", True)
+            self.app.call_from_thread(self.action_refresh)
+
+        return _work
+
+    # ── Settings / diagnostics ─────────────────────────────────────────────
 
     def action_settings(self) -> None:
         def _after(_: None) -> None:
